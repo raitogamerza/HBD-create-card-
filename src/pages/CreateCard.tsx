@@ -335,7 +335,7 @@ export default function CreateCard() {
           </button>
 
           {shareUrl && (
-            <div className="p-5 bg-[#1E1E1E] border-2 border-[#2A2A2A] rounded-[24px] space-y-3">
+            <div className="p-5 bg-[#1E1E1E] border-2 border-[#2A2A2A] rounded-[24px] space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <p className="text-sm font-bold text-green-400">✨ สร้างลิงก์สำเร็จแล้ว!</p>
               <div className="flex gap-2">
                 <input
@@ -347,10 +347,21 @@ export default function CreateCard() {
                 <button
                   onClick={copyToClipboard}
                   className="p-3 bg-[#2A2A2A] rounded-xl hover:bg-[#3A3A3A] transition text-gray-200"
+                  title="คัดลอกลิงก์"
                 >
                   {copied ? <CheckCircle2 size={20} className="text-green-400" /> : <Copy size={20} />}
                 </button>
               </div>
+              
+              <a
+                href="https://forms.gle/Xnjng1X1aWybGFRTA"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={copyToClipboard}
+                className="w-full mt-2 py-3 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm"
+              >
+                📝 คัดลอกลิงก์แล้วไปส่งที่ Google Form เลย!
+              </a>
             </div>
           )}
         </div>
