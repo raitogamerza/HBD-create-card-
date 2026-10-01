@@ -2,8 +2,10 @@ import { useState, useRef } from 'react';
 import { Share2, Copy, CheckCircle2, Image as ImageIcon, SmilePlus, Trash2, Edit3, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LZString from 'lz-string';
-import type { CardData, StickerData } from '../types';
+import type { CardData } from '../types';
 import BannerImage from '../Banner/BannerHBD.png';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // ใช้ import.meta.glob เพื่อดึงรูปทั้งหมดในโฟลเดอร์ src/sticker อัตโนมัติ
 const stickerModules = import.meta.glob('../sticker/*.{png,jpg,jpeg,svg,webp}', { eager: true });
@@ -25,6 +27,7 @@ export default function CreateCard() {
   const [imgLinkInput, setImgLinkInput] = useState('');
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const constraintsRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,36 +89,26 @@ export default function CreateCard() {
     }));
   };
 
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     try {
       if ((!formData.sender && !isAnonymous) || !formData.receiver) {
         alert("กรุณากรอกชื่อของคุณ และ ชื่อผู้รับให้ครบถ้วนก่อนบันทึกครับ 💌");
         return;
       }
+      setIsGenerating(true);
       const finalData = { ...formData, sender: isAnonymous ? 'ไม่ระบุชื่อ' : formData.sender };
 
-    // ถ้ารูปเป็น Base64 (อัปโหลดจากเครื่อง) ข้อมูลจะใหญ่มาก ต้องเซฟลง LocalStorage
-    if (finalData.imageUrl && finalData.imageUrl.startsWith('data:image')) {
-      // ล้างข้อมูลการ์ดเก่าๆ ทิ้งก่อนเพื่อเคลียร์พื้นที่ LocalStorage
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('card_')) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      const cardId = Date.now().toString(36);
-      localStorage.setItem(`card_${cardId}`, JSON.stringify(finalData));
-      setShareUrl(`${window.location.origin}/card?id=${cardId}`);
-    } else {
-      // ถ้าไม่ได้อัปโหลดรูป (หรือใช้ลิงก์รูปสั้นๆ) สามารถบีบอัดลง URL ได้เลย
-      const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(finalData));
-      setShareUrl(`${window.location.origin}/card?data=${compressed}`);
-    }
-    setCopied(false);
+      // Save the data to Firestore
+      const docRef = await addDoc(collection(db, 'cards'), finalData);
+      
+      // Update the URL to point to the new document ID
+      setShareUrl(`${window.location.origin}/card?id=${docRef.id}`);
+      setCopied(false);
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการสร้างลิงก์: " + err);
+      console.error(err);
+      alert("เกิดข้อผิดพลาดในการสร้างลิงก์ (กรุณาเช็คอินเทอร์เน็ตหรือสอบถามผู้ดูแล): " + err);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -335,10 +328,11 @@ export default function CreateCard() {
 
           <button
             onClick={handleGenerateLink}
-            className="relative z-50 w-full py-4 bg-[#D1A08D] hover:bg-[#C2907D] text-white rounded-[24px] font-bold text-lg flex items-center justify-center gap-2 transition shadow-md"
+            disabled={isGenerating}
+            className={`relative z-50 w-full py-4 bg-[#D1A08D] hover:bg-[#C2907D] text-white rounded-[24px] font-bold text-lg flex items-center justify-center gap-2 transition shadow-md ${isGenerating ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <Share2 size={24} />
-            บันทึกและสร้างลิงก์สำหรับส่ง
+            <Share2 size={24} className={isGenerating ? 'animate-spin' : ''} />
+            {isGenerating ? 'กำลังบันทึกข้อมูลไปที่ Cloud...' : 'บันทึกและสร้างลิงก์สำหรับส่ง'}
           </button>
 
           {shareUrl && (

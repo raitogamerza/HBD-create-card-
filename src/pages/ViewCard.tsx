@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import LZString from 'lz-string';
 import type { CardData } from '../types';
 import BannerImage from '../Banner/BannerHBD.png';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function ViewCard() {
   const [searchParams] = useSearchParams();
@@ -12,30 +14,42 @@ export default function ViewCard() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    try {
-      const idParam = searchParams.get('id');
-      const dataParam = searchParams.get('data');
-      
-      if (dataParam) {
-        const json = LZString.decompressFromEncodedURIComponent(dataParam);
-        if (json) {
-          setData(JSON.parse(json));
+    const fetchData = async () => {
+      try {
+        const idParam = searchParams.get('id');
+        const dataParam = searchParams.get('data');
+        
+        if (idParam) {
+          // Fetch from Firestore
+          const docRef = doc(db, 'cards', idParam);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setData(docSnap.data() as CardData);
+          } else {
+            // Fallback to localStorage for old cards
+            const storedData = localStorage.getItem(`card_${idParam}`);
+            if (storedData) {
+              setData(JSON.parse(storedData));
+            } else {
+              setError(true);
+            }
+          }
+        } else if (dataParam) {
+          const json = LZString.decompressFromEncodedURIComponent(dataParam);
+          if (json) {
+            setData(JSON.parse(json));
+          } else {
+            setError(true);
+          }
         } else {
           setError(true);
         }
-      } else if (idParam) {
-        const storedData = localStorage.getItem(`card_${idParam}`);
-        if (storedData) {
-          setData(JSON.parse(storedData));
-        } else {
-          setError(true);
-        }
-      } else {
+      } catch (e) {
+        console.error(e);
         setError(true);
       }
-    } catch (e) {
-      setError(true);
-    }
+    };
+    fetchData();
   }, [searchParams]);
 
   const handleOpen = () => {
