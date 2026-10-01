@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Mali', sans-serif;
+  background-color: #FDFBF7;
+  color: #5A4F48;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E8E2D2;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D6CFC4;
+}
+
+/* ลายขวางสำหรับกรอบรูปว่างเปล่า */
+.striped-bg {
+  background: repeating-linear-gradient(
+    45deg,
+    #F0EBE1,
+    #F0EBE1 10px,
+    #FDFBF7 10px,
+    #FDFBF7 20px
+  );
+}
