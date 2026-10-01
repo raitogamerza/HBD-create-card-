@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Share2, Copy, CheckCircle2, Image as ImageIcon, SmilePlus, Trash2, Edit3, User } from 'lucide-react';
 import { motion } from 'framer-motion';
-import LZString from 'lz-string';
 import type { CardData } from '../types';
 import BannerImage from '../Banner/BannerHBD.png';
 import { collection, addDoc } from 'firebase/firestore';
